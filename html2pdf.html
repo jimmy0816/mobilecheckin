@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MobileCheckin - 行動點交助手 (列印版)</title>
+    <title>MobileCheckin - 行動點交助手</title>
     <!-- Google Fonts (Inter) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,8 +17,9 @@
         .signature-pad { border: 1px dashed #ccc; width: 100%; height: 150px; position: relative; background-color: #f9f9f9; }
         .signature-pad canvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
         .thumbnail-container img { width: 100px; height: 100px; object-fit: cover; margin: 5px; border: 1px solid #ddd; border-radius: 4px;}
+        /* Custom scrollbar for item list if it grows too long */
         #itemListContainer {
-            max-height: 400px; 
+            max-height: 400px; /* Adjust as needed */
             overflow-y: auto;
         }
         .item-photo-preview-container img {
@@ -31,6 +32,7 @@
         }
     </style>
     <script>
+        // Tailwind custom configuration (optional, if needed for specific brand colors etc.)
         tailwind.config = {
             theme: {
                 extend: {
@@ -45,12 +47,16 @@
 <body class="bg-gray-100 p-4 md:p-8 antialiased">
 
     <div class="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-xl">
+        <!-- Header -->
         <header class="text-center mb-8">
             <h1 class="text-3xl font-bold text-blue-600">MobileCheckin</h1>
-            <p class="text-lg text-gray-600">行動點交助手 (列印版)</p>
+            <p class="text-lg text-gray-600">行動點交助手</p>
         </header>
 
+        <!-- Main Form -->
         <form id="checkinForm">
+
+            <!-- Section 1: Basic Information -->
             <section class="mb-6 p-4 border border-gray-200 rounded-lg bg-white">
                 <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center"><i class="fas fa-info-circle mr-3 text-blue-500"></i>基本資訊</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -65,10 +71,12 @@
                 </div>
             </section>
 
+            <!-- Section 2: Item Checklist -->
             <section class="mb-6 p-4 border border-gray-200 rounded-lg bg-white">
                 <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center"><i class="fas fa-list-ul mr-3 text-blue-500"></i>物品清單</h2>
                 <div id="itemListContainer">
                     <div id="itemList" class="space-y-3">
+                        <!-- Item Row Example 1 -->
                         <div class="item-row grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 bg-gray-50 p-3 rounded-md border border-gray-200 items-start">
                             <div class="item-details-inputs flex flex-wrap items-center gap-2">
                                 <input type="text" placeholder="物品名稱 (例如：桌子)" class="flex-grow min-w-[150px] p-2 border border-gray-300 rounded-md text-sm">
@@ -89,6 +97,7 @@
                             </div>
                             <button type="button" class="text-red-500 hover:text-red-700 p-2 md:col-start-2 md:row-start-1 md:self-center" onclick="removeItem(this)" title="移除此物品"><i class="fas fa-trash-alt fa-fw"></i></button>
                         </div>
+                        <!-- Item Row Example 2 -->
                         <div class="item-row grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 bg-gray-50 p-3 rounded-md border border-gray-200 items-start">
                             <div class="item-details-inputs flex flex-wrap items-center gap-2">
                                 <input type="text" placeholder="物品名稱 (例如：椅子)" class="flex-grow min-w-[150px] p-2 border border-gray-300 rounded-md text-sm">
@@ -116,6 +125,7 @@
                 </button>
             </section>
 
+            <!-- Section 3: Remarks and Photo Upload -->
             <section class="mb-6 p-4 border border-gray-200 rounded-lg bg-white">
                 <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center"><i class="fas fa-camera mr-3 text-blue-500"></i>備註與照片</h2>
                 <div>
@@ -131,10 +141,12 @@
                         file:bg-blue-50 file:text-blue-700
                         hover:file:bg-blue-100">
                     <div id="imagePreviewContainer" class="mt-4 flex flex-wrap gap-2 thumbnail-container">
+                        <!-- Image previews will be appended here by JavaScript -->
                     </div>
                 </div>
             </section>
 
+            <!-- Section 4: Signatures -->
             <section class="mb-8 p-4 border border-gray-200 rounded-lg bg-white">
                 <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center"><i class="fas fa-signature mr-3 text-blue-500"></i>雙方簽名</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -155,27 +167,28 @@
                 </div>
             </section>
 
+            <!-- Section 5: Actions -->
             <section class="mt-8 text-center space-y-3 md:space-y-0 md:space-x-3 md:flex md:justify-end">
                 <button type="reset" class="w-full md:w-auto bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2.5 px-6 rounded-lg shadow-sm flex items-center justify-center text-base">
                     <i class="fas fa-undo mr-2"></i>重設表單
                 </button>
-                <button type="button" id="generatePrintBtn" class="w-full md:w-auto bg-green-500 hover:bg-green-600 text-white font-bold py-2.5 px-6 rounded-lg shadow-md flex items-center justify-center text-base">
-                    <i class="fas fa-print mr-2"></i>列印點交記錄
+                <button type="button" id="generatePdfBtn" class="w-full md:w-auto bg-green-500 hover:bg-green-600 text-white font-bold py-2.5 px-6 rounded-lg shadow-md flex items-center justify-center text-base">
+                    <i class="fas fa-file-pdf mr-2"></i>產生並下載PDF
                 </button>
             </section>
         </form>
     </div>
 
-    <div id="printableArea"></div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <!-- Add library scripts before the main script -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/signature_pad/1.5.3/signature_pad.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/printThis/1.15.0/printThis.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <script>
+        // Global variables for signature pad instances
         let signaturePad1, signaturePad2;
 
         document.addEventListener('DOMContentLoaded', () => {
+            // Set default date to today
             const today = new Date().toISOString().split('T')[0];
             const checkinDateInput = document.getElementById('checkinDate');
             if (checkinDateInput) {
@@ -218,7 +231,7 @@
 
             if (photoUpload && imagePreviewContainer) {
                 photoUpload.addEventListener('change', function(event) {
-                    imagePreviewContainer.innerHTML = '';
+                    imagePreviewContainer.innerHTML = ''; // Clear previous previews
                     const files = event.target.files;
                     if (files.length > 0) {
                         const previewTitle = document.createElement('p');
@@ -241,6 +254,7 @@
                 });
             }
             
+            // Signature Pad Initialization
             const canvas1 = document.getElementById('signaturePad1');
             const canvas2 = document.getElementById('signaturePad2');
 
@@ -265,25 +279,30 @@
                     penColor: 'rgb(0, 0, 0)'
                 });
                 
+                // Initial placeholder text (optional, as SignaturePad clears to its background)
+                // If you want text, draw it after ensuring the pad is clear and empty.
+                // For simplicity, we'll rely on the visual cue of the empty box.
+
                 window.addEventListener('resize', () => {
                     resizeCanvas(canvas1);
-                    const data1 = signaturePad1.toData();
+                    const data1 = signaturePad1.toData(); // Save data before clear
                     signaturePad1.clear();
-                    signaturePad1.fromData(data1);
+                    signaturePad1.fromData(data1); // Restore data
 
                     resizeCanvas(canvas2);
-                    const data2 = signaturePad2.toData();
+                    const data2 = signaturePad2.toData(); // Save data before clear
                     signaturePad2.clear();
-                    signaturePad2.fromData(data2);
+                    signaturePad2.fromData(data2); // Restore data
                 });
             } else {
                 console.error('One or both signature canvases not found!');
             }
 
-            const generatePrintBtn = document.getElementById('generatePrintBtn');
-            if (generatePrintBtn) {
-                generatePrintBtn.addEventListener('click', () => {
-                    console.log('列印按鈕被點擊'); // Debug: Confirm button click
+            // PDF Generation Logic
+            const generatePdfBtn = document.getElementById('generatePdfBtn');
+            if (generatePdfBtn) {
+                generatePdfBtn.addEventListener('click', () => {
+                    // 1. Gather Data
                     const venueName = document.getElementById('venueName').value.trim();
                     const checkinDate = document.getElementById('checkinDate').value;
                     const remarks = document.getElementById('remarks').value.trim();
@@ -293,7 +312,7 @@
                         const itemNameInput = row.querySelector('.item-details-inputs input[type="text"]:first-of-type');
                         const quantityInput = row.querySelector('.item-details-inputs input[type="number"]');
                         const conditionSelect = row.querySelector('.item-details-inputs select');
-                        const itemNotesInput = row.querySelector('.item-details-inputs input[type="text"]:last-of-type');
+                        const itemNotesInput = row.querySelector('.item-details-inputs input[type="text"]:last-of-type'); // More specific selector
                         const itemPhotoPreviewImg = row.querySelector('.item-photo-preview-container img');
                         
                         items.push({
@@ -307,55 +326,52 @@
 
                     const photos = [];
                     document.querySelectorAll('#imagePreviewContainer img').forEach(img => {
-                        photos.push(img.src);
+                        photos.push(img.src); // base64 data URL
                     });
 
                     const sig1Data = signaturePad1 && !signaturePad1.isEmpty() ? signaturePad1.toDataURL('image/png') : null;
                     const sig2Data = signaturePad2 && !signaturePad2.isEmpty() ? signaturePad2.toDataURL('image/png') : null;
 
-                    let printHtml = `
+                    console.log("Collected items for PDF:", JSON.stringify(items, null, 2)); // Log items
+
+                    // 2. Construct HTML for PDF
+                    let pdfHtml = `
                         <style>
-                            body { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 10pt; color: #333; margin: 20px; }
-                            h1 { font-size: 18pt; color: #2c5282; text-align: center; margin-bottom: 20px; }
-                            h2 { font-size: 13pt; color: #2d3748; margin-top: 15px; margin-bottom: 8px; border-bottom: 1px solid #cbd5e0; padding-bottom: 4px;}
-                            .section { margin-bottom: 15px; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; }
-                            .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom:10px;}
-                            .info-grid div { padding: 6px 10px; background-color: #f7fafc; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 9pt;}
+                            body { font-family: 'Noto Sans TC', sans-serif; margin: 0; padding: 0; font-size: 10px; color: #333; line-height: 1.4; }
+                            .pdf-container { padding: 5mm; /* Add some padding to the main container instead of body */ }
+                            .section { padding: 8px 0; margin-bottom: 10px; border-bottom: 1px solid #eee; }
+                            .section:last-child { border-bottom: none; }
+                            .section h2 { font-size: 14px; margin-top: 0; margin-bottom: 8px; color: #1a202c; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; }
+                            .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom:15px;}
+                            .info-grid div { padding: 8px 12px; background-color: #f7fafc; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 9.5pt;}
                             .info-grid strong { color: #4a5568; font-weight: 600;}
-                            table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-                            th, td { border: 1px solid #e2e8f0; padding: 8px; text-align: left; font-size: 8.5pt; vertical-align: top;}
-                            th { background-color: #edf2f7; color: #4a5568; font-weight: 600; }
-                            .remarks-box { padding: 10px; border: 1px solid #e2e8f0; background-color: #f7fafc; margin-top:8px; border-radius: 4px; min-height: 50px; white-space: pre-wrap; word-wrap: break-word;}
-                            .photos-container, .signatures-container { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start; padding:8px; background-color: #f7fafc; border-radius:4px; border: 1px solid #e2e8f0;}
-                            .photos-container img { max-width: 100px; max-height: 100px; border: 1px solid #cbd5e0; border-radius: 3px; object-fit: cover; }
-                            .signature-block { text-align: center; margin: 8px; padding:8px; border: 1px solid #cbd5e0; border-radius: 4px; background-color: #fff;}
-                            .signature-block img { max-width: 180px; max-height:90px; border: 1px solid #dae1e7; margin-bottom: 4px; object-fit: contain;}
-                            .signature-block p { font-size: 8.5pt; margin-top: 4px; color: #4a5568; font-weight:500;}
-                            .no-data { color: #718096; font-style: italic; padding: 8px; }
-                            @media print {
-                                body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                                .section { border: 1px solid #ccc; page-break-inside: avoid; }
-                                .info-grid div { background-color: #f7fafc !important; }
-                                th { background-color: #edf2f7 !important; }
-                                .photos-container, .signatures-container { background-color: #f7fafc !important; }
-                                .signature-block { background-color: #fff !important; }
-                            }
+                            table { width: 100%; border-collapse: collapse; margin-top: 10px; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05); }
+                            th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: left; font-size: 9pt; vertical-align: top;}
+                            th { background-color: #edf2f7; color: #4a5568; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;}
+                            .remarks-box { padding: 12px; border: 1px solid #e2e8f0; background-color: #f7fafc; margin-top:10px; border-radius: 6px; min-height: 60px; white-space: pre-wrap; word-wrap: break-word;}
+                            .photos-container, .signatures-container { margin-top: 15px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-start; padding:10px; background-color: #f7fafc; border-radius:6px; border: 1px solid #e2e8f0;}
+                            .photos-container img { max-width: 120px; max-height: 120px; border: 2px solid #cbd5e0; border-radius: 4px; object-fit: cover; box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
+                            .signature-block { text-align: center; margin: 10px; padding:10px; border: 1px solid #cbd5e0; border-radius: 6px; background-color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05);}
+                            .signature-block img { max-width: 200px; max-height:100px; border: 1px solid #dae1e7; margin-bottom: 5px; object-fit: contain;}
+                            .signature-block p { font-size: 9pt; margin-top: 5px; color: #4a5568; font-weight:500;}
+                            .no-data { color: #718096; font-style: italic; padding: 10px; }
                         </style>
-                        <h1>行動點交助手 - 點交紀錄</h1>
-                        <div class="section">
-                            <h2>基本資訊</h2>
-                            <div class="info-grid">
-                                <div><strong>場地/物件名稱:</strong> ${venueName || '<span class="no-data">未填寫</span>'}</div>
-                                <div><strong>點交日期:</strong> ${checkinDate || '<span class="no-data">未填寫</span>'}</div>
+                        <div class="pdf-container">
+                            <h1>行動點交助手 - 點交紀錄</h1>
+                            <div class="section">
+                                <h2>基本資訊</h2>
+                                <div class="info-grid">
+                                    <div><strong>場地/物件名稱:</strong> ${venueName || '<span class="no-data">未填寫</span>'}</div>
+                                    <div><strong>點交日期:</strong> ${checkinDate || '<span class="no-data">未填寫</span>'}</div>
+                                </div>
                             </div>
-                        </div>
                     `;
 
-                    printHtml += `
+                    pdfHtml += `
                         <div class="section">
                             <h2>物品清單</h2>`;
                     if (items.length > 0 && items.some(item => item.name && item.name !== 'N/A')) {
-                        printHtml += `
+                        pdfHtml += `
                             <table>
                                 <thead>
                                     <tr><th>物品名稱</th><th>數量</th><th>狀況</th><th>照片</th><th>備註</th></tr>
@@ -363,89 +379,94 @@
                                 <tbody>`;
                         items.forEach(item => {
                             if (item.name && item.name !== 'N/A') { 
-                                printHtml += `<tr>
+                                pdfHtml += `<tr>
                                                 <td>${item.name}</td>
                                                 <td>${item.quantity || '-'}</td>
                                                 <td>${item.condition || '-'}</td>
-                                                <td>${item.photoSrc ? `<img src="${item.photoSrc}" alt="Item Photo" style="max-width:50px; max-height:50px;">` : '無照片'}</td>
+                                                <td>${item.photoSrc ? `<img src="${item.photoSrc}" alt="Item Photo" style="max-width:60px; max-height:60px;">` : '無照片'}</td>
                                                 <td>${item.notes || '-'}</td>
                                             </tr>`;
                             }
                         });
-                        printHtml += `</tbody></table>`;
+                        pdfHtml += `</tbody></table>`;
                     } else {
-                        printHtml += `<p class="no-data">未列出任何物品。</p>`;
+                        pdfHtml += `<p class="no-data">未列出任何物品。</p>`;
                     }
-                    printHtml += `</div>`;
+                    pdfHtml += `</div>`;
 
-                    printHtml += `
+                    pdfHtml += `
                         <div class="section">
                             <h2>備註</h2>
                             <div class="remarks-box">${remarks ? remarks.replace(/\n/g, '<br>') : '<span class="no-data">無備註。</span>'}</div>
                         </div>
                     `;
 
-                    printHtml += `
+                    pdfHtml += `
                         <div class="section">
                             <h2>照片紀錄</h2>
                             <div class="photos-container">`;
                     if (photos.length > 0) {
                         photos.forEach(photoSrc => {
-                            printHtml += `<img src="${photoSrc}" alt="photo">`;
+                            pdfHtml += `<img src="${photoSrc}" alt="photo">`;
                         });
                     } else {
-                        printHtml += `<p class="no-data">未上傳照片。</p>`;
+                        pdfHtml += `<p class="no-data">未上傳照片。</p>`;
                     }
-                    printHtml += `</div></div>`;
+                    pdfHtml += `</div></div>`;
 
-                    printHtml += `
+                    // Add a page break hint before signatures if there's content before it
+                    if (venueName || checkinDate || items.length > 0 || photos.length > 0 || remarks) {
+                        pdfHtml += `<div class="html2pdf__page-break-before" style="margin-top: 5mm;"></div>`;
+                    }
+
+                    pdfHtml += `
                         <div class="section">
                             <h2>雙方簽名確認</h2>
                             <div class="signatures-container" style="justify-content: space-around;">`;
                     if (sig1Data || sig2Data) {
-                        printHtml += `<div class="signature-block">
-                                        ${sig1Data ? `<img src="${sig1Data}" alt="甲方簽名">` : '<p class="no-data" style="width:180px; height:90px; display:flex; align-items:center; justify-content:center;">甲方未簽名</p>'}
+                        pdfHtml += `<div class="signature-block">
+                                        ${sig1Data ? `<img src="${sig1Data}" alt="甲方簽名">` : '<p class="no-data" style="width:200px; height:100px; display:flex; align-items:center; justify-content:center;">甲方未簽名</p>'}
                                         <p>甲方簽名 (Party A)</p>
                                     </div>`;
-                        printHtml += `<div class="signature-block">
-                                        ${sig2Data ? `<img src="${sig2Data}" alt="乙方簽名">` : '<p class="no-data" style="width:180px; height:90px; display:flex; align-items:center; justify-content:center;">乙方未簽名</p>'}
+                        pdfHtml += `<div class="signature-block">
+                                        ${sig2Data ? `<img src="${sig2Data}" alt="乙方簽名">` : '<p class="no-data" style="width:200px; height:100px; display:flex; align-items:center; justify-content:center;">乙方未簽名</p>'}
                                         <p>乙方簽名 (Party B)</p>
                                     </div>`;
                     } else {
-                        printHtml += `<p class="no-data">雙方均未簽名。</p>`;
+                        pdfHtml += `<p class="no-data">雙方均未簽名。</p>`;
                     }
-                    printHtml += `</div></div>`;
-                    
-                    console.log('Generated printHtml:', printHtml); // Debug: Inspect generated HTML
-                    $('#printableArea').html(printHtml);
-                    console.log('Content of #printableArea:', $('#printableArea').html()); // Debug: Inspect #printableArea content
+                    pdfHtml += `</div></div>`;
 
-                    $('#printableArea').printThis({
-                        debug: false,               // show the iframe for debugging
-                        importCSS: true,            // import parent page css
-                        importStyle: true,         // import style tags
-                        printContainer: true,       // print outer container/$.selector
-                        loadCSS: "",              // path to additional css file - use an array [] for multiple
-                        pageTitle: "點交記錄 - " + (venueName || "Report"), // add title to print page
-                        removeInline: false,        // remove inline styles from print elements
-                        removeInlineSelector: "*",  // custom selectors to filter inline styles. removeInline must be true
-                        printDelay: 333,            // variable print delay
-                        header: null,               // prefix to html
-                        footer: null,               // postfix to html
-                        base: false,                // preserve the BASE tag or accept a string for the URL
-                        formValues: true,           // preserve input/form values
-                        canvas: true,              // copy canvas content
-                        doctypeString: '<!DOCTYPE html>', // enter a different doctype for older markup
-                        removeScripts: false,       // remove script tags from print content
-                        copyTagClasses: true,      // copy classes from the html & body tag
-                        beforePrintEvent: null,     // callback function for printEvent in iframe
-                        beforePrint: null,          // function called before iframe is filled
-                        afterPrint: null            // function called before iframe is removed
+                    // 3. Use html2pdf.js
+                    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').replace('T', '_').slice(0,19);
+                    const filename = `MobileCheckin_${venueName.replace(/[^a-z0-9_\u4e00-\u9fa5]/gi, '') || 'Report'}_${timestamp}.pdf`;
+
+                    const opt = {
+                        margin:       [10, 12, 10, 12], // top, left, bottom, right in mm
+                        filename:     filename,
+                        image:        { type: 'jpeg', quality: 0.95 },
+                        html2canvas:  { scale: 2, useCORS: true, logging: true, scrollY: 0 }, 
+                        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                        pagebreak:    { mode: ['avoid-all', 'css', 'legacy'], before: '.html2pdf__page-break-before' }
+                    };
+
+                    const pdfElement = document.createElement('div');
+                    pdfElement.innerHTML = pdfHtml;
+                    document.body.appendChild(pdfElement);
+
+                    html2pdf().from(pdfElement).set(opt).save().then(() => {
+                        console.log('PDF generated and download initiated.');
+                        document.body.removeChild(pdfElement); // Clean up the temporary element
+                    }).catch(err => {
+                        console.error('Error generating PDF:', err);
+                        alert('產生PDF時發生錯誤，請檢查控制台以獲取更多資訊。');
+                        document.body.removeChild(pdfElement); // Clean up the temporary element
                     });
                 });
             }
         });
 
+        // Global functions
         function removeItem(button) {
             button.closest('.item-row').remove();
         }
