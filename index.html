@@ -337,10 +337,11 @@
                     // 2. Construct HTML for PDF
                     let pdfHtml = `
                         <style>
-                            body { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 10pt; color: #333; }
-                            h1 { font-size: 20pt; color: #2c5282; text-align: center; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 1px; }
-                            h2 { font-size: 14pt; color: #2d3748; margin-top: 20px; margin-bottom: 10px; border-bottom: 2px solid #cbd5e0; padding-bottom: 6px;}
-                            .section { margin-bottom: 20px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; background-color: #fdfdfe; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);}
+                            body { font-family: 'Noto Sans TC', sans-serif; margin: 0; padding: 0; font-size: 10px; color: #333; line-height: 1.4; }
+                            .pdf-container { padding: 5mm; /* Add some padding to the main container instead of body */ }
+                            .section { padding: 8px 0; margin-bottom: 10px; border-bottom: 1px solid #eee; }
+                            .section:last-child { border-bottom: none; }
+                            .section h2 { font-size: 14px; margin-top: 0; margin-bottom: 8px; color: #1a202c; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; }
                             .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom:15px;}
                             .info-grid div { padding: 8px 12px; background-color: #f7fafc; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 9.5pt;}
                             .info-grid strong { color: #4a5568; font-weight: 600;}
@@ -355,14 +356,15 @@
                             .signature-block p { font-size: 9pt; margin-top: 5px; color: #4a5568; font-weight:500;}
                             .no-data { color: #718096; font-style: italic; padding: 10px; }
                         </style>
-                        <h1>行動點交助手 - 點交紀錄</h1>
-                        <div class="section">
-                            <h2>基本資訊</h2>
-                            <div class="info-grid">
-                                <div><strong>場地/物件名稱:</strong> ${venueName || '<span class="no-data">未填寫</span>'}</div>
-                                <div><strong>點交日期:</strong> ${checkinDate || '<span class="no-data">未填寫</span>'}</div>
+                        <div class="pdf-container">
+                            <h1>行動點交助手 - 點交紀錄</h1>
+                            <div class="section">
+                                <h2>基本資訊</h2>
+                                <div class="info-grid">
+                                    <div><strong>場地/物件名稱:</strong> ${venueName || '<span class="no-data">未填寫</span>'}</div>
+                                    <div><strong>點交日期:</strong> ${checkinDate || '<span class="no-data">未填寫</span>'}</div>
+                                </div>
                             </div>
-                        </div>
                     `;
 
                     pdfHtml += `
@@ -412,6 +414,11 @@
                     }
                     pdfHtml += `</div></div>`;
 
+                    // Add a page break hint before signatures if there's content before it
+                    if (venueName || checkinDate || items.length > 0 || photos.length > 0 || remarks) {
+                        pdfHtml += `<div class="html2pdf__page-break-before" style="margin-top: 5mm;"></div>`;
+                    }
+
                     pdfHtml += `
                         <div class="section">
                             <h2>雙方簽名確認</h2>
@@ -440,22 +447,20 @@
                         image:        { type: 'jpeg', quality: 0.95 },
                         html2canvas:  { scale: 2, useCORS: true, logging: true, scrollY: 0 }, // scrollY: 0 to capture only visible part of element
                         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                        pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] } // try to avoid breaking elements across pages
+                        pagebreak:    { mode: ['avoid-all', 'css', 'legacy'], before: '.html2pdf__page-break-before' }
                     };
 
-                    const pdfContentElement = document.createElement('div');
-                    pdfContentElement.innerHTML = pdfHtml;
-                    // For debugging the HTML structure for PDF:
-                    // document.body.appendChild(pdfContentElement);
-                    // pdfContentElement.style.width = '210mm'; // A4 width for visual check
-                    // pdfContentElement.style.border = '1px solid red';
+                    const pdfElement = document.createElement('div');
+                    pdfElement.innerHTML = pdfHtml;
+                    document.body.appendChild(pdfElement);
 
-                    html2pdf().from(pdfContentElement).set(opt).save().then(() => {
+                    html2pdf().from(pdfElement).set(opt).save().then(() => {
                         console.log('PDF generated and download initiated.');
-                        // Optional: remove pdfContentElement if it was appended for debugging
+                        document.body.removeChild(pdfElement); // Clean up the temporary element
                     }).catch(err => {
                         console.error('Error generating PDF:', err);
                         alert('產生PDF時發生錯誤，請檢查控制台以獲取更多資訊。');
+                        document.body.removeChild(pdfElement); // Clean up the temporary element
                     });
                 });
             }
