@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MobileCheckin - 行動點交助手</title>
+    <!-- Google Fonts (Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .signature-pad { border: 1px dashed #ccc; width: 100%; height: 150px; position: relative; background-color: #f9f9f9; }
+        .signature-pad canvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+        .thumbnail-container img { width: 100px; height: 100px; object-fit: cover; margin: 5px; border: 1px solid #ddd; border-radius: 4px;}
+        /* Custom scrollbar for item list if it grows too long */
+        #itemListContainer {
+            max-height: 400px; /* Adjust as needed */
+            overflow-y: auto;
+        }
+        .item-photo-preview-container img {
+            width: 70px; 
+            height: 70px; 
+            object-fit: cover; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 4px; 
+            margin-top: 4px;
+        }
+    </style>
+    <script>
+        // Tailwind custom configuration (optional, if needed for specific brand colors etc.)
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-100 p-4 md:p-8 antialiased">
+
+    <div class="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-xl">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-blue-600">MobileCheckin</h1>
+            <p class="text-lg text-gray-600">行動點交助手</p>
+        </header>
+
+        <!-- Main Form -->
+        <form id="checkinForm">
+
+            <!-- Section 1: Basic Information -->
+            <section class="mb-6 p-4 border border-gray-200 rounded-lg bg-white">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center"><i class="fas fa-info-circle mr-3 text-blue-500"></i>基本資訊</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="venueName" class="block text-sm font-medium text-gray-700 mb-1">場地/物件名稱</label>
+                        <input type="text" id="venueName" name="venueName" placeholder="例如：會議室A / 租賃套房" class="mt-1 block w-full p-2.5 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm">
+                    </div>
+                    <div>
+                        <label for="checkinDate" class="block text-sm font-medium text-gray-700 mb-1">點交日期</label>
+                        <input type="date" id="checkinDate" name="checkinDate" value="" class="mt-1 block w-full p-2.5 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm">
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 2: Item Checklist -->
+            <section class="mb-6 p-4 border border-gray-200 rounded-lg bg-white">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center"><i class="fas fa-list-ul mr-3 text-blue-500"></i>物品清單</h2>
+                <div id="itemListContainer">
+                    <div id="itemList" class="space-y-3">
+                        <!-- Item Row Example 1 -->
+                        <div class="item-row grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 bg-gray-50 p-3 rounded-md border border-gray-200 items-start">
+                            <div class="item-details-inputs flex flex-wrap items-center gap-2">
+                                <input type="text" placeholder="物品名稱 (例如：桌子)" class="flex-grow min-w-[150px] p-2 border border-gray-300 rounded-md text-sm">
+                                <input type="number" placeholder="數量" value="1" min="0" class="w-20 p-2 border border-gray-300 rounded-md text-sm">
+                                <select class="min-w-[100px] p-2 border border-gray-300 rounded-md text-sm bg-white">
+                                    <option value="good">良好</option>
+                                    <option value="fair">尚可</option>
+                                    <option value="damaged">損壞</option>
+                                    <option value="missing">遺失</option>
+                                </select>
+                                <input type="text" placeholder="狀況備註" class="flex-grow min-w-[150px] p-2 border border-gray-300 rounded-md text-sm">
+                            </div>
+                            <div class="item-photo-section flex flex-col items-center md:items-end">
+                                <input type="file" accept="image/*" class="item-photo-upload text-xs w-full md:w-auto file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200" onchange="previewItemPhoto(this)">
+                                <div class="item-photo-preview-container mt-1">
+                                    <img src="#" alt="物品照片預覽" style="display:none;">
+                                </div>
+                            </div>
+                            <button type="button" class="text-red-500 hover:text-red-700 p-2 md:col-start-2 md:row-start-1 md:self-center" onclick="removeItem(this)" title="移除此物品"><i class="fas fa-trash-alt fa-fw"></i></button>
+                        </div>
+                        <!-- Item Row Example 2 -->
+                        <div class="item-row grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 bg-gray-50 p-3 rounded-md border border-gray-200 items-start">
+                            <div class="item-details-inputs flex flex-wrap items-center gap-2">
+                                <input type="text" placeholder="物品名稱 (例如：椅子)" class="flex-grow min-w-[150px] p-2 border border-gray-300 rounded-md text-sm">
+                                <input type="number" placeholder="數量" value="4" min="0" class="w-20 p-2 border border-gray-300 rounded-md text-sm">
+                                <select class="min-w-[100px] p-2 border border-gray-300 rounded-md text-sm bg-white">
+                                    <option value="good">良好</option>
+                                    <option value="fair">尚可</option>
+                                    <option value="damaged">損壞</option>
+                                    <option value="missing">遺失</option>
+                                </select>
+                                <input type="text" placeholder="狀況備註" class="flex-grow min-w-[150px] p-2 border border-gray-300 rounded-md text-sm">
+                            </div>
+                            <div class="item-photo-section flex flex-col items-center md:items-end">
+                                <input type="file" accept="image/*" class="item-photo-upload text-xs w-full md:w-auto file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200" onchange="previewItemPhoto(this)">
+                                <div class="item-photo-preview-container mt-1">
+                                    <img src="#" alt="物品照片預覽" style="display:none;">
+                                </div>
+                            </div>
+                            <button type="button" class="text-red-500 hover:text-red-700 p-2 md:col-start-2 md:row-start-1 md:self-center" onclick="removeItem(this)" title="移除此物品"><i class="fas fa-trash-alt fa-fw"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" id="addItemBtn" class="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-md shadow-sm flex items-center text-sm">
+                    <i class="fas fa-plus mr-2"></i>新增物品
+                </button>
+            </section>
+
+            <!-- Section 3: Remarks and Photo Upload -->
+            <section class="mb-6 p-4 border border-gray-200 rounded-lg bg-white">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center"><i class="fas fa-camera mr-3 text-blue-500"></i>備註與照片</h2>
+                <div>
+                    <label for="remarks" class="block text-sm font-medium text-gray-700 mb-1">備註</label>
+                    <textarea id="remarks" name="remarks" rows="3" placeholder="輸入其他補充說明事項..." class="mt-1 block w-full p-2.5 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"></textarea>
+                </div>
+                <div class="mt-4">
+                    <label for="photoUpload" class="block text-sm font-medium text-gray-700 mb-1">上傳照片 (可多選)</label>
+                    <input type="file" id="photoUpload" name="photoUpload" accept="image/*" multiple class="mt-1 block w-full text-sm text-gray-500 file:cursor-pointer
+                        file:mr-4 file:py-2 file:px-4
+                        file:rounded-lg file:border-0
+                        file:text-sm file:font-semibold
+                        file:bg-blue-50 file:text-blue-700
+                        hover:file:bg-blue-100">
+                    <div id="imagePreviewContainer" class="mt-4 flex flex-wrap gap-2 thumbnail-container">
+                        <!-- Image previews will be appended here by JavaScript -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 4: Signatures -->
+            <section class="mb-8 p-4 border border-gray-200 rounded-lg bg-white">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center"><i class="fas fa-signature mr-3 text-blue-500"></i>雙方簽名</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">甲方簽名 (Party A)</label>
+                        <div class="signature-pad rounded-md overflow-hidden">
+                            <canvas id="signaturePad1"></canvas>
+                        </div>
+                        <button type="button" class="mt-2 text-sm text-blue-600 hover:text-blue-800" onclick="clearSignature('signaturePad1')">清除簽名</button>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">乙方簽名 (Party B)</label>
+                        <div class="signature-pad rounded-md overflow-hidden">
+                            <canvas id="signaturePad2"></canvas>
+                        </div>
+                        <button type="button" class="mt-2 text-sm text-blue-600 hover:text-blue-800" onclick="clearSignature('signaturePad2')">清除簽名</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 5: Actions -->
+            <section class="mt-8 text-center space-y-3 md:space-y-0 md:space-x-3 md:flex md:justify-end">
+                <button type="reset" class="w-full md:w-auto bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2.5 px-6 rounded-lg shadow-sm flex items-center justify-center text-base">
+                    <i class="fas fa-undo mr-2"></i>重設表單
+                </button>
+                <button type="button" id="generatePdfBtn" class="w-full md:w-auto bg-green-500 hover:bg-green-600 text-white font-bold py-2.5 px-6 rounded-lg shadow-md flex items-center justify-center text-base">
+                    <i class="fas fa-file-pdf mr-2"></i>產生並下載PDF
+                </button>
+            </section>
+        </form>
+    </div>
+
+    <!-- Add library scripts before the main script -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/signature_pad/1.5.3/signature_pad.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <script>
+        // Global variables for signature pad instances
+        let signaturePad1, signaturePad2;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set default date to today
+            const today = new Date().toISOString().split('T')[0];
+            const checkinDateInput = document.getElementById('checkinDate');
+            if (checkinDateInput) {
+                 checkinDateInput.value = today;
+            }
+
+            const addItemBtn = document.getElementById('addItemBtn');
+            const itemList = document.getElementById('itemList');
+
+            if (addItemBtn && itemList) {
+                addItemBtn.addEventListener('click', () => {
+                    const newItemRow = document.createElement('div');
+                    newItemRow.className = 'item-row grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 bg-gray-50 p-3 rounded-md border border-gray-200 items-start';
+                    newItemRow.innerHTML = `
+                        <div class="item-details-inputs flex flex-wrap items-center gap-2">
+                            <input type="text" placeholder="物品名稱" class="flex-grow min-w-[150px] p-2 border border-gray-300 rounded-md text-sm">
+                            <input type="number" placeholder="數量" value="1" min="0" class="w-20 p-2 border border-gray-300 rounded-md text-sm">
+                            <select class="min-w-[100px] p-2 border border-gray-300 rounded-md text-sm bg-white">
+                                <option value="good">良好</option>
+                                <option value="fair">尚可</option>
+                                <option value="damaged">損壞</option>
+                                <option value="missing">遺失</option>
+                            </select>
+                            <input type="text" placeholder="狀況備註" class="flex-grow min-w-[150px] p-2 border border-gray-300 rounded-md text-sm">
+                        </div>
+                        <div class="item-photo-section flex flex-col items-center md:items-end">
+                            <input type="file" accept="image/*" class="item-photo-upload text-xs w-full md:w-auto file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200" onchange="previewItemPhoto(this)">
+                            <div class="item-photo-preview-container mt-1">
+                                <img src="#" alt="物品照片預覽" style="display:none;">
+                            </div>
+                        </div>
+                        <button type="button" class="text-red-500 hover:text-red-700 p-2 md:col-start-2 md:row-start-1 md:self-center" onclick="removeItem(this)" title="移除此物品"><i class="fas fa-trash-alt fa-fw"></i></button>
+                    `;
+                    itemList.appendChild(newItemRow);
+                });
+            }
+
+            const photoUpload = document.getElementById('photoUpload');
+            const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+
+            if (photoUpload && imagePreviewContainer) {
+                photoUpload.addEventListener('change', function(event) {
+                    imagePreviewContainer.innerHTML = ''; // Clear previous previews
+                    const files = event.target.files;
+                    if (files.length > 0) {
+                        const previewTitle = document.createElement('p');
+                        previewTitle.className = 'w-full text-xs text-gray-500 mb-1';
+                        previewTitle.textContent = `已選擇 ${files.length} 張圖片：`;
+                        imagePreviewContainer.appendChild(previewTitle);
+                    }
+                    for (const file of files) {
+                        if (file.type.startsWith('image/')) {
+                            const reader = new FileReader();
+                            reader.onload = function(e) {
+                                const img = document.createElement('img');
+                                img.src = e.target.result;
+                                img.alt = file.name;
+                                imagePreviewContainer.appendChild(img);
+                            }
+                            reader.readAsDataURL(file);
+                        }
+                    }
+                });
+            }
+            
+            // Signature Pad Initialization
+            const canvas1 = document.getElementById('signaturePad1');
+            const canvas2 = document.getElementById('signaturePad2');
+
+            function resizeCanvas(canvasElement) {
+                const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                const padElement = canvasElement.closest('.signature-pad');
+                canvasElement.width = padElement.clientWidth * ratio;
+                canvasElement.height = padElement.clientHeight * ratio;
+                canvasElement.getContext("2d").scale(ratio, ratio);
+            }
+
+            if (canvas1 && canvas2) {
+                resizeCanvas(canvas1);
+                signaturePad1 = new SignaturePad(canvas1, {
+                    backgroundColor: 'rgb(249, 249, 249)',
+                    penColor: 'rgb(0, 0, 0)'
+                });
+
+                resizeCanvas(canvas2);
+                signaturePad2 = new SignaturePad(canvas2, {
+                    backgroundColor: 'rgb(249, 249, 249)',
+                    penColor: 'rgb(0, 0, 0)'
+                });
+                
+                // Initial placeholder text (optional, as SignaturePad clears to its background)
+                // If you want text, draw it after ensuring the pad is clear and empty.
+                // For simplicity, we'll rely on the visual cue of the empty box.
+
+                window.addEventListener('resize', () => {
+                    resizeCanvas(canvas1);
+                    const data1 = signaturePad1.toData(); // Save data before clear
+                    signaturePad1.clear();
+                    signaturePad1.fromData(data1); // Restore data
+
+                    resizeCanvas(canvas2);
+                    const data2 = signaturePad2.toData(); // Save data before clear
+                    signaturePad2.clear();
+                    signaturePad2.fromData(data2); // Restore data
+                });
+            } else {
+                console.error('One or both signature canvases not found!');
+            }
+
+            // PDF Generation Logic
+            const generatePdfBtn = document.getElementById('generatePdfBtn');
+            if (generatePdfBtn) {
+                generatePdfBtn.addEventListener('click', () => {
+                    // 1. Gather Data
+                    const venueName = document.getElementById('venueName').value.trim();
+                    const checkinDate = document.getElementById('checkinDate').value;
+                    const remarks = document.getElementById('remarks').value.trim();
+
+                    const items = [];
+                    document.querySelectorAll('#itemList .item-row').forEach(row => {
+                        const itemNameInput = row.querySelector('.item-details-inputs input[type="text"]:first-of-type');
+                        const quantityInput = row.querySelector('.item-details-inputs input[type="number"]');
+                        const conditionSelect = row.querySelector('.item-details-inputs select');
+                        const itemNotesInput = row.querySelector('.item-details-inputs input[type="text"]:last-of-type'); // More specific selector
+                        const itemPhotoPreviewImg = row.querySelector('.item-photo-preview-container img');
+                        
+                        items.push({
+                            name: itemNameInput ? itemNameInput.value.trim() : 'N/A',
+                            quantity: quantityInput ? quantityInput.value : 'N/A',
+                            condition: conditionSelect ? conditionSelect.value : 'N/A',
+                            notes: itemNotesInput ? itemNotesInput.value.trim() : '',
+                            photoSrc: (itemPhotoPreviewImg && itemPhotoPreviewImg.style.display !== 'none') ? itemPhotoPreviewImg.src : null
+                        });
+                    });
+
+                    const photos = [];
+                    document.querySelectorAll('#imagePreviewContainer img').forEach(img => {
+                        photos.push(img.src); // base64 data URL
+                    });
+
+                    const sig1Data = signaturePad1 && !signaturePad1.isEmpty() ? signaturePad1.toDataURL('image/png') : null;
+                    const sig2Data = signaturePad2 && !signaturePad2.isEmpty() ? signaturePad2.toDataURL('image/png') : null;
+
+                    console.log("Collected items for PDF:", JSON.stringify(items, null, 2)); // Log items
+
+                    // 2. Construct HTML for PDF
+                    let pdfHtml = `
+                        <style>
+                            body { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 10pt; color: #333; }
+                            h1 { font-size: 20pt; color: #2c5282; text-align: center; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 1px; }
+                            h2 { font-size: 14pt; color: #2d3748; margin-top: 20px; margin-bottom: 10px; border-bottom: 2px solid #cbd5e0; padding-bottom: 6px;}
+                            .section { margin-bottom: 20px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; background-color: #fdfdfe; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);}
+                            .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom:15px;}
+                            .info-grid div { padding: 8px 12px; background-color: #f7fafc; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 9.5pt;}
+                            .info-grid strong { color: #4a5568; font-weight: 600;}
+                            table { width: 100%; border-collapse: collapse; margin-top: 10px; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05); }
+                            th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: left; font-size: 9pt; vertical-align: top;}
+                            th { background-color: #edf2f7; color: #4a5568; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;}
+                            .remarks-box { padding: 12px; border: 1px solid #e2e8f0; background-color: #f7fafc; margin-top:10px; border-radius: 6px; min-height: 60px; white-space: pre-wrap; word-wrap: break-word;}
+                            .photos-container, .signatures-container { margin-top: 15px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-start; padding:10px; background-color: #f7fafc; border-radius:6px; border: 1px solid #e2e8f0;}
+                            .photos-container img { max-width: 120px; max-height: 120px; border: 2px solid #cbd5e0; border-radius: 4px; object-fit: cover; box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
+                            .signature-block { text-align: center; margin: 10px; padding:10px; border: 1px solid #cbd5e0; border-radius: 6px; background-color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05);}
+                            .signature-block img { max-width: 200px; max-height:100px; border: 1px solid #dae1e7; margin-bottom: 5px; object-fit: contain;}
+                            .signature-block p { font-size: 9pt; margin-top: 5px; color: #4a5568; font-weight:500;}
+                            .no-data { color: #718096; font-style: italic; padding: 10px; }
+                        </style>
+                        <h1>行動點交助手 - 點交紀錄</h1>
+                        <div class="section">
+                            <h2>基本資訊</h2>
+                            <div class="info-grid">
+                                <div><strong>場地/物件名稱:</strong> ${venueName || '<span class="no-data">未填寫</span>'}</div>
+                                <div><strong>點交日期:</strong> ${checkinDate || '<span class="no-data">未填寫</span>'}</div>
+                            </div>
+                        </div>
+                    `;
+
+                    pdfHtml += `
+                        <div class="section">
+                            <h2>物品清單</h2>`;
+                    if (items.length > 0 && items.some(item => item.name && item.name !== 'N/A')) {
+                        pdfHtml += `
+                            <table>
+                                <thead>
+                                    <tr><th>物品名稱</th><th>數量</th><th>狀況</th><th>照片</th><th>備註</th></tr>
+                                </thead>
+                                <tbody>`;
+                        items.forEach(item => {
+                            if (item.name && item.name !== 'N/A') { 
+                                pdfHtml += `<tr>
+                                                <td>${item.name}</td>
+                                                <td>${item.quantity || '-'}</td>
+                                                <td>${item.condition || '-'}</td>
+                                                <td>${item.photoSrc ? `<img src="${item.photoSrc}" alt="Item Photo" style="max-width:60px; max-height:60px;">` : '無照片'}</td>
+                                                <td>${item.notes || '-'}</td>
+                                            </tr>`;
+                            }
+                        });
+                        pdfHtml += `</tbody></table>`;
+                    } else {
+                        pdfHtml += `<p class="no-data">未列出任何物品。</p>`;
+                    }
+                    pdfHtml += `</div>`;
+
+                    pdfHtml += `
+                        <div class="section">
+                            <h2>備註</h2>
+                            <div class="remarks-box">${remarks ? remarks.replace(/\n/g, '<br>') : '<span class="no-data">無備註。</span>'}</div>
+                        </div>
+                    `;
+
+                    pdfHtml += `
+                        <div class="section">
+                            <h2>照片紀錄</h2>
+                            <div class="photos-container">`;
+                    if (photos.length > 0) {
+                        photos.forEach(photoSrc => {
+                            pdfHtml += `<img src="${photoSrc}" alt="photo">`;
+                        });
+                    } else {
+                        pdfHtml += `<p class="no-data">未上傳照片。</p>`;
+                    }
+                    pdfHtml += `</div></div>`;
+
+                    pdfHtml += `
+                        <div class="section">
+                            <h2>雙方簽名確認</h2>
+                            <div class="signatures-container" style="justify-content: space-around;">`;
+                    if (sig1Data || sig2Data) {
+                        pdfHtml += `<div class="signature-block">
+                                        ${sig1Data ? `<img src="${sig1Data}" alt="甲方簽名">` : '<p class="no-data" style="width:200px; height:100px; display:flex; align-items:center; justify-content:center;">甲方未簽名</p>'}
+                                        <p>甲方簽名 (Party A)</p>
+                                    </div>`;
+                        pdfHtml += `<div class="signature-block">
+                                        ${sig2Data ? `<img src="${sig2Data}" alt="乙方簽名">` : '<p class="no-data" style="width:200px; height:100px; display:flex; align-items:center; justify-content:center;">乙方未簽名</p>'}
+                                        <p>乙方簽名 (Party B)</p>
+                                    </div>`;
+                    } else {
+                        pdfHtml += `<p class="no-data">雙方均未簽名。</p>`;
+                    }
+                    pdfHtml += `</div></div>`;
+
+                    // 3. Use html2pdf.js
+                    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').replace('T', '_').slice(0,19);
+                    const filename = `MobileCheckin_${venueName.replace(/[^a-z0-9_\u4e00-\u9fa5]/gi, '') || 'Report'}_${timestamp}.pdf`;
+
+                    const opt = {
+                        margin:       [10, 12, 10, 12], // top, left, bottom, right in mm
+                        filename:     filename,
+                        image:        { type: 'jpeg', quality: 0.95 },
+                        html2canvas:  { scale: 2, useCORS: true, logging: true, scrollY: 0 }, // scrollY: 0 to capture only visible part of element
+                        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                        pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] } // try to avoid breaking elements across pages
+                    };
+
+                    const pdfContentElement = document.createElement('div');
+                    pdfContentElement.innerHTML = pdfHtml;
+                    // For debugging the HTML structure for PDF:
+                    // document.body.appendChild(pdfContentElement);
+                    // pdfContentElement.style.width = '210mm'; // A4 width for visual check
+                    // pdfContentElement.style.border = '1px solid red';
+
+                    html2pdf().from(pdfContentElement).set(opt).save().then(() => {
+                        console.log('PDF generated and download initiated.');
+                        // Optional: remove pdfContentElement if it was appended for debugging
+                    }).catch(err => {
+                        console.error('Error generating PDF:', err);
+                        alert('產生PDF時發生錯誤，請檢查控制台以獲取更多資訊。');
+                    });
+                });
+            }
+        });
+
+        // Global functions
+        function removeItem(button) {
+            button.closest('.item-row').remove();
+        }
+
+        function clearSignature(padId) {
+            if (padId === 'signaturePad1' && signaturePad1) {
+                signaturePad1.clear();
+            } else if (padId === 'signaturePad2' && signaturePad2) {
+                signaturePad2.clear();
+            }
+        }
+
+        function previewItemPhoto(fileInput) {
+            const previewContainer = fileInput.closest('.item-photo-section').querySelector('.item-photo-preview-container');
+            const previewImg = previewContainer.querySelector('img');
+            if (fileInput.files.length > 0 && fileInput.files[0].type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    previewImg.style.display = 'block';
+                }
+                reader.readAsDataURL(fileInput.files[0]);
+            } else {
+                previewImg.src = '#';
+                previewImg.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
